@@ -143,11 +143,16 @@ public class DatasourceController {
 	@PostMapping("/{id}/test")
 	public ApiResponse testConnection(@PathVariable Integer id) {
 		try {
-			boolean success = datasourceService.testConnection(id);
-			return success ? ApiResponse.success("连接测试成功") : ApiResponse.error("连接测试失败");
+			datasourceService.testConnection(id);
+			return ApiResponse.success("连接测试成功");
 		}
 		catch (Exception e) {
-			throw new InternalServerException("测试失败：" + e.getMessage());
+			// Extract root cause message
+			String message = e.getMessage();
+			if (e.getCause() != null) {
+				message = e.getCause().getMessage();
+			}
+			return ApiResponse.error("连接测试失败: " + message);
 		}
 	}
 

@@ -65,9 +65,13 @@ class AgentKnowledgeService {
    * 分页查询知识列表（支持多条件过滤）
    */
   async queryByPage(queryDTO: AgentKnowledgeQueryDTO): Promise<PageResult<AgentKnowledge>> {
+    const params = { ...queryDTO };
+    if (params.type) {
+      params.type = params.type.toUpperCase();
+    }
     const response = await axios.post<PageResult<AgentKnowledge>>(
       `${API_BASE_URL}/query/page`,
-      queryDTO,
+      params,
     );
     return response.data;
   }
@@ -82,7 +86,7 @@ class AgentKnowledgeService {
     keyword?: string,
   ): Promise<AgentKnowledge[]> {
     const params: Record<string, string | number> = {};
-    if (type) params.type = type;
+    if (type) params.type = type.toUpperCase();
     if (status) params.status = status;
     if (keyword) params.keyword = keyword;
 
@@ -114,9 +118,20 @@ class AgentKnowledgeService {
    * 创建知识
    */
   async create(knowledge: AgentKnowledge): Promise<AgentKnowledge> {
+    const formData = new FormData();
+    if (knowledge.agentId) formData.append('agentId', String(knowledge.agentId));
+    if (knowledge.title) formData.append('title', knowledge.title);
+    if (knowledge.type) formData.append('type', knowledge.type.toUpperCase());
+    if (knowledge.content) formData.append('content', knowledge.content);
+    if (knowledge.question) formData.append('question', knowledge.question);
+    if (knowledge.isRecall !== undefined) formData.append('isRecall', String(knowledge.isRecall));
+
+    // Default splitter type
+    formData.append('splitterType', 'token');
+
     const response = await axios.post<{ success: boolean; data: AgentKnowledge }>(
       `${API_BASE_URL}/create`,
-      knowledge,
+      formData,
     );
     return response.data.data;
   }
@@ -126,9 +141,13 @@ class AgentKnowledgeService {
    */
   async update(id: number, knowledge: Partial<AgentKnowledge>): Promise<AgentKnowledge | null> {
     try {
+      const payload = { ...knowledge };
+      if (payload.type) {
+        payload.type = payload.type.toUpperCase();
+      }
       const response = await axios.put<{ success: boolean; data: AgentKnowledge }>(
         `${API_BASE_URL}/${id}`,
-        knowledge,
+        payload,
       );
       return response.data.data;
     } catch (error) {
@@ -197,14 +216,21 @@ class AgentKnowledgeService {
     totalCount: number;
     typeStatistics: Array<[string, number]>;
   }> {
-    const response = await axios.get<{
-      success: boolean;
-      data: {
-        totalCount: number;
-        typeStatistics: Array<[string, number]>;
+    try {
+      const response = await axios.get<{
+        success: boolean;
+        data: { totalCount: number; typeStatistics: Record<string, number> };
+      }>(`${API_BASE_URL}/statistics/${agentId}`);
+
+      const stats = response.data.data;
+      return {
+        totalCount: stats.totalCount,
+        typeStatistics: Object.entries(stats.typeStatistics),
       };
-    }>(`${API_BASE_URL}/statistics/${agentId}`);
-    return response.data.data;
+    } catch (error) {
+      console.error('Failed to get statistics:', error);
+      return { totalCount: 0, typeStatistics: [] };
+    }
   }
 }
 

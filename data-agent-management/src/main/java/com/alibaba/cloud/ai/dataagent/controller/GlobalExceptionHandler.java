@@ -18,14 +18,22 @@ package com.alibaba.cloud.ai.dataagent.controller;
 import com.alibaba.cloud.ai.dataagent.exception.InternalServerException;
 import com.alibaba.cloud.ai.dataagent.exception.InvalidInputException;
 import com.alibaba.cloud.ai.dataagent.vo.ApiResponse;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.stream.Collectors;
+
+@Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
 
 	@ExceptionHandler(InvalidInputException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -35,8 +43,45 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(InternalServerException.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiResponse<Object> handleInvalidInputException(InternalServerException e) {
+	public ApiResponse<Object> handleInternalServerException(InternalServerException e) {
 		return ApiResponse.error(e.getMessage());
+	}
+
+	@ExceptionHandler(ExpiredJwtException.class)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ApiResponse<Object> handleExpiredJwtException(ExpiredJwtException e) {
+		log.warn("JWT token expired: {}", e.getMessage());
+		return ApiResponse.error("Token已过期，请重新登录");
+	}
+
+	@ExceptionHandler(MalformedJwtException.class)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ApiResponse<Object> handleMalformedJwtException(MalformedJwtException e) {
+		log.warn("Malformed JWT token: {}", e.getMessage());
+		return ApiResponse.error("Token格式错误");
+	}
+
+	@ExceptionHandler(SignatureException.class)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ApiResponse<Object> handleSignatureException(SignatureException e) {
+		log.warn("Invalid JWT signature: {}", e.getMessage());
+		return ApiResponse.error("Token签名无效");
+	}
+
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiResponse<Object> handleValidationException(MethodArgumentNotValidException e) {
+		String msg = e.getBindingResult().getFieldErrors().stream()
+				.map(FieldError::getDefaultMessage)
+				.collect(Collectors.joining("; "));
+		return ApiResponse.error(msg);
+	}
+
+	@ExceptionHandler(Exception.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiResponse<Object> handleGenericException(Exception e) {
+		log.error("Unhandled exception", e);
+		return ApiResponse.error(e.getMessage() != null ? e.getMessage() : "服务器内部错误");
 	}
 
 }

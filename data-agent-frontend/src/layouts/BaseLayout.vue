@@ -1,167 +1,133 @@
-<!--
- * Copyright 2025 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
--->
 <template>
-  <div class="base-layout">
-    <!-- 现代化头部导航 -->
-    <header class="page-header">
-      <div class="header-content">
-        <div class="brand-section">
-          <div class="brand-logo">
-            <i class="bi bi-robot"></i>
-            <span class="brand-text">Spring AI Alibaba Data Agent</span>
-          </div>
-          <nav class="header-nav">
-            <div class="nav-item" :class="{ active: isAgentPage() }" @click="goToAgentList">
-              <i class="bi bi-grid-3x3-gap"></i>
-              <span>智能体列表</span>
-            </div>
-            <div class="nav-item" :class="{ active: isModelConfigPage() }" @click="goToModelConfig">
-              <i class="bi bi-gear"></i>
-              <span>模型配置</span>
-            </div>
-          </nav>
-        </div>
-      </div>
-    </header>
+  <el-container class="base-layout">
+    <!-- 侧边栏 -->
+    <Sidebar />
 
-    <!-- 页面内容区域 -->
-    <main class="page-content">
-      <slot></slot>
-    </main>
-  </div>
+    <!-- 主内容区域 -->
+    <el-container class="main-container">
+      <el-header class="page-header">
+        <div class="header-content">
+          <!-- 这里可以放置面包屑、用户信息、设置等 -->
+          <div class="breadcrumb-placeholder">
+            <!-- 示例：当前页面标题 -->
+            <span class="page-title">{{ currentPageTitle }}</span>
+          </div>
+
+          <div class="header-actions">
+            <el-dropdown @command="handleCommand">
+              <span class="el-dropdown-link">
+                <el-avatar :size="32" :src="userStore.userAvatar" v-if="userStore.userAvatar" />
+                <el-avatar :size="32" icon="UserFilled" v-else />
+                <span class="username">{{ userStore.username }}</span>
+                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+      </el-header>
+
+      <el-main class="page-content">
+        <slot></slot>
+      </el-main>
+    </el-container>
+  </el-container>
 </template>
 
-<script>
-  import { useRouter } from 'vue-router';
+<script setup>
+import { computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { UserFilled, ArrowDown } from '@element-plus/icons-vue';
+import Sidebar from '@/components/layout/Sidebar.vue';
+import { useUserStore } from '@/stores/user';
 
-  export default {
-    name: 'BaseLayout',
-    setup() {
-      const router = useRouter();
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
 
-      // 导航方法
-      const goToAgentList = () => {
-        router.push('/agents');
-      };
+const currentPageTitle = computed(() => {
+  return route.meta.title || 'Data Agent';
+});
 
-      const goToModelConfig = () => {
-        router.push('/model-config');
-      };
+const handleCommand = command => {
+  if (command === 'logout') {
+    userStore.logout();
+    router.push('/login');
+  } else if (command === 'profile') {
+    router.push('/profile');
+  }
+};
 
-      const isAgentPage = () => {
-        return (
-          router.currentRoute.value.name === 'AgentList' ||
-          router.currentRoute.value.name === 'AgentDetail' ||
-          router.currentRoute.value.name === 'AgentCreate' ||
-          router.currentRoute.value.name === 'AgentRun'
-        );
-      };
-
-      const isModelConfigPage = () => {
-        return router.currentRoute.value.name === 'ModelConfig';
-      };
-
-      return {
-        goToAgentList,
-        goToModelConfig,
-        isAgentPage,
-        isModelConfigPage,
-      };
-    },
-  };
+onMounted(() => {
+  userStore.checkAuth();
+});
 </script>
 
 <style scoped>
-  .base-layout {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  }
+.base-layout {
+  min-height: 100vh;
+  background-color: var(--bg-color);
+}
 
-  .page-header {
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+.main-container {
+  margin-left: 240px; /* Width of the sidebar */
+  transition: margin-left 0.3s;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-  .header-content {
-    width: 100%;
-    padding: 0 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 4rem;
-  }
+.page-header {
+  background: var(--header-bg-color);
+  border-bottom: 1px solid var(--border-color);
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
 
-  .brand-section {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-  }
+.header-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  .brand-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
-  }
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
 
-  .brand-logo i {
-    font-size: 1.5rem;
-    color: #3b82f6;
-  }
+.header-actions {
+  display: flex;
+  align-items: center;
+}
 
-  .header-nav {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
+.el-dropdown-link {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
 
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #64748b;
-    font-weight: 500;
-  }
+.username {
+  font-size: 14px;
+  font-weight: 500;
+}
 
-  .nav-item:hover {
-    background: #f1f5f9;
-    color: #334155;
-  }
-
-  .nav-item.active {
-    background: #e0f2fe;
-    color: #0369a1;
-  }
-
-  .nav-item i {
-    font-size: 1rem;
-  }
-
-  .page-content {
-    flex: 1;
-    padding: 0;
-  }
+.page-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+}
 </style>

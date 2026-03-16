@@ -28,7 +28,6 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import reactor.core.publisher.Flux;
 
 @Slf4j
 @Service
@@ -57,8 +56,7 @@ public class ModelConfigOpsService {
 				// 3. 刷新内存模型
 				log.info("Detected update on active config [{}], refreshing memory...", entity.getModelType());
 				refreshMemoryModel(entity.getModelType());
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				// 抛出异常回滚数据库事务
 				throw new RuntimeException("配置更新失败: " + e.getMessage(), e);
 			}
@@ -92,11 +90,9 @@ public class ModelConfigOpsService {
 	private void refreshMemoryModel(ModelType type) {
 		if (ModelType.CHAT.equals(type)) {
 			aiModelRegistry.refreshChat();
-		}
-		else if (ModelType.EMBEDDING.equals(type)) {
+		} else if (ModelType.EMBEDDING.equals(type)) {
 			aiModelRegistry.refreshEmbedding();
-		}
-		else {
+		} else {
 			throw new RuntimeException("未知的模型类型: " + type);
 		}
 	}
@@ -110,19 +106,15 @@ public class ModelConfigOpsService {
 		try {
 			if (ModelType.CHAT.getCode().equalsIgnoreCase(modelType)) {
 				testChatModel(config);
-			}
-			else if (ModelType.EMBEDDING.getCode().equalsIgnoreCase(modelType)) {
+			} else if (ModelType.EMBEDDING.getCode().equalsIgnoreCase(modelType)) {
 				testEmbeddingModel(config);
-			}
-			else {
+			} else {
 				throw new IllegalArgumentException("未知的模型类型: " + modelType);
 			}
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			try {
 				log.error("Failed to test model connection. Config: {}", objectMapper.writeValueAsString(config), e);
-			}
-			catch (JsonProcessingException e1) {
+			} catch (JsonProcessingException e1) {
 				log.error("Failed to convert config to JSON. Config: {}", config, e1);
 			}
 			// 重新抛出异常，让 Controller 捕获并展示给前端
@@ -141,11 +133,8 @@ public class ModelConfigOpsService {
 		// 2. 发起最轻量的请求
 		String promptText = "Hello";
 
-		// 3. 调用
-		Flux<String> responseFlux = tempModel.stream(promptText);
-		String response = responseFlux.collect(StringBuilder::new, StringBuilder::append)
-			.map(StringBuilder::toString)
-			.block();
+		// 3. 调用 (使用 call 而不是 stream，避免流式参数兼容性问题)
+		String response = tempModel.call(promptText);
 
 		// 4. 校验结果
 		if (!StringUtils.hasText(response)) {

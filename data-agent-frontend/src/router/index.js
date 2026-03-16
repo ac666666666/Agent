@@ -18,6 +18,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import routes from '@/router/routes';
 import modelConfigService from '@/services/modelConfig';
+import { useUserStore } from '@/stores/user';
 
 // 创建路由实例
 const router = createRouter({
@@ -44,58 +45,29 @@ router.beforeEach(async (to, from, next) => {
     document.title = 'Spring AI Alibaba Data Agent';
   }
 
-  if (to.path === '/model-config') {
-    console.log(`导航到: ${to.path} (${to.name})`);
+  // 认证检查
+  const userStore = useUserStore();
+  const token = localStorage.getItem('auth_token');
+
+  if (to.meta.public) {
+    // 如果是公开页面（登录/注册），且已登录，则重定向到首页
+    if (token) {
+      next('/dashboard');
+      return;
+    }
     next();
     return;
   }
 
-  // 检查模型配置是否就绪
-  try {
-    const result = await modelConfigService.checkReady();
-
-    if (!result.ready) {
-      // 模型配置未就绪，阻止跳转并重定向到配置页面
-      const missingModels = [];
-      if (!result.chatModelReady) {
-        missingModels.push('聊天模型');
-      }
-      if (!result.embeddingModelReady) {
-        missingModels.push('嵌入模型');
-      }
-
-      // 只在首次显示提示，避免重复提示
-      if (!hasShownWarning) {
-        ElMessage.warning({
-          message: `欢迎使用！检测到您尚未配置${missingModels.join('和')}，请先配置 OpenAI/阿里/Ollama 等模型参数以激活系统。`,
-          duration: 5000,
-        });
-        hasShownWarning = true;
-      }
-
-      console.log(`模型配置未就绪，重定向到配置页面`);
-      next('/model-config');
-      return;
-    }
-
-    // 模型配置就绪，重置提示标记
-    hasShownWarning = false;
-    console.log(`导航到: ${to.path} (${to.name})`);
-    next();
-  } catch (error) {
-    console.error('检查模型配置失败:', error);
-
-    // 如果检查失败，也重定向到配置页面
-    if (!hasShownWarning) {
-      ElMessage.error({
-        message: '无法检查模型配置状态，请确保后端服务已启动并配置模型。',
-        duration: 5000,
-      });
-      hasShownWarning = true;
-    }
-
-    next('/model-config');
+  if (!token) {
+    next('/login');
+    return;
   }
+
+  // 对于所有需要认证的页面，直接允许访问
+  // 不在路由守卫中强制检查模型配置，让用户自由导航
+  console.log(`导航到: ${to.path} (${to.name})`);
+  next();
 });
 
 router.afterEach((to, from) => {

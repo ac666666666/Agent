@@ -65,7 +65,7 @@ public class AgentKnowledgeServiceImpl implements AgentKnowledgeService {
 		String storagePath = null;
 		checkCreateKnowledgeDto(createKnowledgeDto);
 
-		if (createKnowledgeDto.getType().equals(KnowledgeType.DOCUMENT.getCode())) {
+		if (createKnowledgeDto.getType().equals(KnowledgeType.DOCUMENT.getCode()) && createKnowledgeDto.getFile() != null) {
 			// 将文件保存到磁盘
 			try {
 				storagePath = fileStorageService.storeFile(createKnowledgeDto.getFile(), AGENT_KNOWLEDGE_FILE_PATH);
@@ -85,8 +85,7 @@ public class AgentKnowledgeServiceImpl implements AgentKnowledgeService {
 			throw new RuntimeException("Failed to create knowledge in database.");
 		}
 
-		eventPublisher
-			.publishEvent(new AgentKnowledgeEmbeddingEvent(this, knowledge.getId(), knowledge.getSplitterType()));
+		eventPublisher.publishEvent(new AgentKnowledgeEmbeddingEvent(this, knowledge.getId(), knowledge.getSplitterType()));
 		log.info("Knowledge created and event published. Id: {}, splitterType: {}", knowledge.getId(),
 				knowledge.getSplitterType());
 
@@ -95,8 +94,8 @@ public class AgentKnowledgeServiceImpl implements AgentKnowledgeService {
 
 	private static void checkCreateKnowledgeDto(CreateKnowledgeDTO createKnowledgeDto) {
 		if (createKnowledgeDto.getType().equals(KnowledgeType.DOCUMENT.getCode())
-				&& createKnowledgeDto.getFile() == null) {
-			throw new RuntimeException("File is required for document type.");
+				&& createKnowledgeDto.getFile() == null && !StringUtils.hasText(createKnowledgeDto.getContent())) {
+			throw new RuntimeException("File or content is required for document type.");
 		}
 		if (createKnowledgeDto.getType().equals(KnowledgeType.QA.getCode())
 				|| createKnowledgeDto.getType().equals(KnowledgeType.FAQ.getCode())) {

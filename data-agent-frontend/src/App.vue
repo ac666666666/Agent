@@ -19,10 +19,16 @@
   </div>
 </template>
 
-<script>
-  export default {
-    name: 'App',
-  };
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import { useSystemStore } from '@/stores/system';
+
+const systemStore = useSystemStore();
+
+onMounted(() => {
+  // App startup - load system settings
+  systemStore.loadSettings();
+});
 </script>
 
 <style>

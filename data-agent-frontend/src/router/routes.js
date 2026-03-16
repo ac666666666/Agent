@@ -19,7 +19,40 @@ const routes = [
   // 首页重定向
   {
     path: '/',
-    redirect: '/agents',
+    redirect: '/dashboard',
+  },
+
+  // 登录注册
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/Login.vue'),
+    meta: {
+      title: '登录',
+      module: 'auth',
+      public: true,
+    },
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/Register.vue'),
+    meta: {
+      title: '注册',
+      module: 'auth',
+      public: true,
+    },
+  },
+
+  // 仪表盘
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: () => import('@/views/Dashboard.vue'),
+    meta: {
+      title: '仪表盘',
+      module: 'dashboard',
+    },
   },
 
   // 智能体管理模块
@@ -61,6 +94,36 @@ const routes = [
     },
   },
 
+  // 知识库管理
+  {
+    path: '/knowledge',
+    name: 'KnowledgeList',
+    component: () => import('@/views/KnowledgeList.vue'),
+    meta: {
+      title: '知识库管理',
+      module: 'knowledge',
+    },
+  },
+  {
+    path: '/datasources',
+    name: 'DatasourceList',
+    component: () => import('@/views/DatasourceList.vue'),
+    meta: {
+      title: '数据源管理',
+      module: 'datasource',
+    },
+  },
+
+  {
+    path: '/settings',
+    name: 'GeneralSettings',
+    component: () => import('@/views/GeneralSettings.vue'),
+    meta: {
+      title: '通用设置',
+      module: 'settings',
+    },
+  },
+
   // 模型配置模块
   {
     path: '/model-config',
@@ -69,6 +132,17 @@ const routes = [
     meta: {
       title: '模型配置',
       module: 'config',
+    },
+  },
+
+  // 个人中心
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/views/Profile.vue'),
+    meta: {
+      title: '个人中心',
+      module: 'settings',
     },
   },
 

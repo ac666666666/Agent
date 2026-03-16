@@ -72,6 +72,7 @@ public class JsonParseUtil {
 	private <T> T tryConvertToObjectInternal(String json, JsonParserFunction<T> parser) {
 		log.info("Trying to convert JSON to object: {}", json);
 		String currentJson = removeThinkTags(json);
+		currentJson = MarkdownParserUtil.extractRawText(currentJson);
 		Exception lastException = null;
 		ObjectMapper objectMapper = JsonUtil.getObjectMapper();
 

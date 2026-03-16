@@ -65,8 +65,9 @@ public interface DatasourceService {
 
 	/**
 	 * Test data source connection
+	 * @return true if success, otherwise throws exception
 	 */
-	boolean testConnection(Integer id);
+	void testConnection(Integer id);
 
 	/**
 	 * Get data source list associated with agent

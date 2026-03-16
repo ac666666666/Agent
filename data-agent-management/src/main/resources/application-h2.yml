@@ -15,6 +15,7 @@ spring:
       schema-locations:
         - classpath:sql/h2/schema-h2.sql
         - classpath:sql/h2/product_schema-h2.sql
+        - classpath:sql/h2/schema-user.sql
       data-locations:
         - classpath:sql/h2/data-h2.sql
         - classpath:sql/h2/product_data-h2.sql

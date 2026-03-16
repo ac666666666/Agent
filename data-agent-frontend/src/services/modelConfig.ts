@@ -99,9 +99,11 @@ class ModelConfigService {
    */
   async checkReady(): Promise<ModelCheckReady> {
     const response = await axios.get<ApiResponse<ModelCheckReady>>(`${API_BASE_URL}/check-ready`);
-    return (
-      response.data.data || { chatModelReady: false, embeddingModelReady: false, ready: false }
-    );
+    return response.data.data || {
+      chatModelReady: false,
+      embeddingModelReady: false,
+      ready: false
+    };
   }
 }
 

@@ -58,6 +58,9 @@ public class DynamicModelFactory {
 			.model(config.getModelName())
 			.temperature(config.getTemperature())
 			.maxTokens(config.getMaxTokens())
+			// 兼容性处理：部分厂商（如 DeepSeek）可能不支持 stream_options 参数或处理有误，导致 400 错误
+			// 这里显式禁用流式 Token 统计以确保最大兼容性
+			.streamUsage(false)
 			.build();
 		// 4. 返回统一的 OpenAiChatModel
 		return OpenAiChatModel.builder().openAiApi(openAiApi).defaultOptions(openAiChatOptions).build();

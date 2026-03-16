@@ -56,25 +56,25 @@ public abstract class AbstractDBConnectionPool implements DBConnectionPool {
 	public ErrorCodeEnum ping(DbConfigBO config) {
 		String jdbcUrl = config.getUrl();
 		try (Connection connection = DriverManager.getConnection(jdbcUrl, config.getUsername(), config.getPassword());
-				Statement stmt = connection.createStatement();) {
+				Statement stmt = connection.createStatement()) {
 			if (BizDataSourceTypeEnum.isPgDialect(config.getConnectionType())) {
-				ResultSet rs = stmt.executeQuery(getSelectSchemaSQL(config.getSchema()));
-				if (rs.next()) {
-					int count = rs.getInt(1);
-					rs.close();
-					if (count == 0) {
-						log.info("the specified schema '{}' does not exist.", config.getSchema());
-						return ErrorCodeEnum.SCHEMA_NOT_EXIST_3D070;
+				try (ResultSet rs = stmt.executeQuery(getSelectSchemaSQL(config.getSchema()))) {
+					if (rs.next()) {
+						int count = rs.getInt(1);
+						if (count == 0) {
+							log.info("the specified schema '{}' does not exist.", config.getSchema());
+							return ErrorCodeEnum.SCHEMA_NOT_EXIST_3D070;
+						}
 					}
 				}
-				rs.close();
 			}
 			return ErrorCodeEnum.SUCCESS;
 		}
 		catch (SQLException e) {
 			log.error("test db connection error, url:{}, state:{}, message:{}", jdbcUrl, e.getSQLState(),
 					e.getMessage());
-			return errorMapping(e.getSQLState());
+			// Throw runtime exception with detailed message instead of returning error code
+			throw new RuntimeException("Database connection failed: " + e.getMessage() + " (SQLState: " + e.getSQLState() + ")", e);
 		}
 	}
 

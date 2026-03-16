@@ -135,10 +135,10 @@ public class DatasourceServiceImpl implements DatasourceService {
 	}
 
 	@Override
-	public boolean testConnection(Integer id) {
+	public void testConnection(Integer id) {
 		Datasource datasource = getDatasourceById(id);
 		if (datasource == null) {
-			return false;
+			throw new RuntimeException("Datasource not found: " + id);
 		}
 		try {
 			// ping测试
@@ -147,12 +147,15 @@ public class DatasourceServiceImpl implements DatasourceService {
 			// Update test status
 			updateTestStatus(id, connectionSuccess ? "success" : "failed");
 
-			return connectionSuccess;
+			if (!connectionSuccess) {
+				throw new RuntimeException("Connection failed (ping returned false)");
+			}
 		}
 		catch (Exception e) {
 			updateTestStatus(id, "failed");
 			log.error("Error testing connection for datasource ID " + id + ": " + e.getMessage(), e);
-			return false;
+			// 重新抛出异常，以便上层捕获并返回给前端
+			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 
