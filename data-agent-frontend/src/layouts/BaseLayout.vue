@@ -5,14 +5,13 @@
 
     <!-- 主内容区域 -->
     <el-container class="main-container">
+      <!-- 顶部导航栏 -->
       <el-header class="page-header">
         <div class="header-content">
-          <!-- 这里可以放置面包屑、用户信息、设置等 -->
-          <div class="breadcrumb-placeholder">
-            <!-- 示例：当前页面标题 -->
-            <span class="page-title">{{ currentPageTitle }}</span>
-          </div>
+          <!-- 面包屑导航 -->
+          <Breadcrumb />
 
+          <!-- 右侧操作区 -->
           <div class="header-actions">
             <el-dropdown @command="handleCommand">
               <span class="el-dropdown-link">
@@ -32,6 +31,10 @@
         </div>
       </el-header>
 
+      <!-- 标签页导航 -->
+      <NavTabs />
+
+      <!-- 主内容 -->
       <el-main class="page-content">
         <slot></slot>
       </el-main>
@@ -40,19 +43,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { UserFilled, ArrowDown } from '@element-plus/icons-vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
+import Breadcrumb from '@/components/layout/Breadcrumb.vue';
+import NavTabs from '@/components/layout/NavTabs.vue';
 import { useUserStore } from '@/stores/user';
 
-const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-
-const currentPageTitle = computed(() => {
-  return route.meta.title || 'Data Agent';
-});
 
 const handleCommand = command => {
   if (command === 'logout') {
@@ -85,13 +85,14 @@ onMounted(() => {
 .page-header {
   background: var(--header-bg-color);
   border-bottom: 1px solid var(--border-color);
-  height: 64px;
+  height: 56px;
   padding: 0 24px;
   display: flex;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 99;
+  box-shadow: var(--shadow-sm);
 }
 
 .header-content {
@@ -102,7 +103,7 @@ onMounted(() => {
 }
 
 .page-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
 }

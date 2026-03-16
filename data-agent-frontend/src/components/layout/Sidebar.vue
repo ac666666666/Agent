@@ -1,56 +1,70 @@
 <template>
-  <el-aside width="240px" class="sidebar">
+  <el-aside :width="isCollapsed ? '80px' : '240px'" class="sidebar" :class="{ 'is-collapsed': isCollapsed }">
     <div class="logo-container">
       <i class="bi bi-robot logo-icon"></i>
-      <span class="logo-text">{{ systemStore.systemName || 'Data Agent' }}</span>
+      <transition name="fade">
+        <span v-show="!isCollapsed" class="logo-text">{{ systemStore.systemName || 'Data Agent' }}</span>
+      </transition>
+      <!-- 收缩按钮 -->
+      <div class="collapse-trigger" @click="toggleCollapse">
+        <i class="bi" :class="isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+      </div>
     </div>
 
-    <el-menu :default-active="activeMenu" class="sidebar-menu" :router="true">
-      <div class="menu-group-title">概览</div>
+    <el-menu 
+      :default-active="activeMenu" 
+      class="sidebar-menu" 
+      :router="true"
+      :collapse="isCollapsed"
+      :collapse-transition="false"
+    >
+      <div v-show="!isCollapsed" class="menu-group-title">概览</div>
       <el-menu-item index="/dashboard">
         <el-icon><i class="bi bi-speedometer2"></i></el-icon>
-        <span>仪表盘</span>
+        <template #title><span>仪表盘</span></template>
       </el-menu-item>
 
-      <div class="menu-group-title">智能体管理</div>
+      <div v-show="!isCollapsed" class="menu-group-title">智能体管理</div>
       <el-menu-item index="/agents">
         <el-icon><i class="bi bi-robot"></i></el-icon>
-        <span>我的智能体</span>
+        <template #title><span>我的智能体</span></template>
       </el-menu-item>
       <el-menu-item index="/agent-market" disabled>
         <el-icon><i class="bi bi-shop"></i></el-icon>
-        <span>智能体市场</span>
-        <el-tag size="small" type="info" class="menu-tag">Dev</el-tag>
+        <template #title>
+          <span>智能体市场</span>
+          <el-tag size="small" type="info" class="menu-tag">Dev</el-tag>
+        </template>
       </el-menu-item>
 
-      <div class="menu-group-title">知识库</div>
+      <div v-show="!isCollapsed" class="menu-group-title">知识库</div>
       <el-menu-item index="/knowledge">
         <el-icon><i class="bi bi-book"></i></el-icon>
-        <span>知识库管理</span>
+        <template #title><span>知识库管理</span></template>
       </el-menu-item>
       <el-menu-item index="/datasources">
         <el-icon><i class="bi bi-database"></i></el-icon>
-        <span>数据源连接</span>
+        <template #title><span>数据源连接</span></template>
       </el-menu-item>
 
-      <div class="menu-group-title">系统设置</div>
+      <div v-show="!isCollapsed" class="menu-group-title">系统设置</div>
       <el-menu-item index="/model-config">
         <el-icon><i class="bi bi-sliders"></i></el-icon>
-        <span>模型配置</span>
+        <template #title><span>模型配置</span></template>
       </el-menu-item>
       <el-menu-item index="/settings">
         <el-icon><i class="bi bi-gear"></i></el-icon>
-        <span>通用设置</span>
+        <template #title><span>通用设置</span></template>
       </el-menu-item>
       <el-menu-item index="/profile">
         <el-icon><i class="bi bi-person-circle"></i></el-icon>
-        <span>个人中心</span>
+        <template #title><span>个人中心</span></template>
       </el-menu-item>
     </el-menu>
 
     <!-- 底部用户信息 -->
     <div class="sidebar-footer">
-      <div class="user-profile">
+      <div class="user-profile" :class="{ 'is-collapsed': isCollapsed }">
         <el-avatar
           :size="32"
           :src="userStore.userAvatar"
@@ -58,20 +72,24 @@
           class="user-avatar"
         />
         <el-avatar :size="32" icon="UserFilled" v-else class="user-avatar" />
-        <div class="user-info">
-          <div class="user-name">{{ userStore.username }}</div>
-          <div class="user-role">{{ userStore.userRole }}</div>
-        </div>
-        <el-icon class="logout-icon" @click.stop="handleLogout">
-          <i class="bi bi-box-arrow-right"></i>
-        </el-icon>
+        <transition name="fade">
+          <div v-show="!isCollapsed" class="user-info">
+            <div class="user-name">{{ userStore.username }}</div>
+            <div class="user-role">{{ userStore.userRole }}</div>
+          </div>
+        </transition>
+        <transition name="fade">
+          <el-icon v-show="!isCollapsed" class="logout-icon" @click.stop="handleLogout">
+            <i class="bi bi-box-arrow-right"></i>
+          </el-icon>
+        </transition>
       </div>
     </div>
   </el-aside>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSystemStore } from '@/stores/system';
 import { useUserStore } from '@/stores/user';
@@ -80,6 +98,7 @@ const route = useRoute();
 const router = useRouter();
 const systemStore = useSystemStore();
 const userStore = useUserStore();
+const isCollapsed = ref(false);
 
 const activeMenu = computed(() => {
   // Map specific routes to their parent menu item if needed
@@ -88,6 +107,10 @@ const activeMenu = computed(() => {
   }
   return route.path;
 });
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value;
+};
 
 const handleLogout = () => {
   userStore.logout();
@@ -107,7 +130,45 @@ const handleLogout = () => {
   top: 0;
   bottom: 0;
   z-index: 1000;
-  transition: width 0.3s;
+  transition: width 0.3s ease;
+}
+
+/* 收缩按钮 */
+.collapse-trigger {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.sidebar.is-collapsed .collapse-trigger {
+  margin-left: 0;
+  border-radius: 50%;
+}
+
+.collapse-trigger:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: scale(1.05);
+}
+
+.collapse-trigger:hover i {
+  color: white;
+}
+
+.collapse-trigger i {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: bold;
+  transition: color 0.3s ease;
 }
 
 .logo-container {
@@ -117,11 +178,20 @@ const handleLogout = () => {
   padding: 0 20px;
   border-bottom: 1px solid var(--border-color);
   gap: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar.is-collapsed .logo-container {
+  justify-content: center;
+  padding: 0 20px;
+  gap: 0;
 }
 
 .logo-icon {
   font-size: 24px;
-  color: #1e40af; /* Primary color from design system */
+  color: var(--primary-color);
+  flex-shrink: 0;
 }
 
 .logo-text {
@@ -136,11 +206,16 @@ const handleLogout = () => {
   background-color: transparent;
   flex: 1;
   padding-top: 10px;
+  overflow-x: hidden;
 }
 
 :deep(.el-menu) {
   background-color: transparent;
   border-right: none;
+}
+
+:deep(.el-menu--collapse) {
+  width: 80px;
 }
 
 :deep(.el-menu-item) {
@@ -149,25 +224,50 @@ const handleLogout = () => {
   margin: 4px 12px;
   border-radius: 8px;
   color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.sidebar.is-collapsed :deep(.el-menu-item) {
+  margin: 4px 12px;
+  padding: 0 !important;
+  justify-content: center;
 }
 
 :deep(.el-menu-item.is-active) {
-  background-color: var(--menu-active-bg);
-  color: #1e40af;
+  background: var(--menu-active-bg);
+  color: var(--menu-active-text);
   font-weight: 600;
 }
 
+.sidebar.is-collapsed :deep(.el-menu-item.is-active) {
+  border-left: none;
+  border-radius: 8px;
+}
+
+.sidebar:not(.is-collapsed) :deep(.el-menu-item.is-active) {
+  border-left: 3px solid var(--menu-active-border);
+}
+
 html.dark :deep(.el-menu-item.is-active) {
-  color: #60a5fa;
+  color: var(--menu-active-text);
 }
 
 :deep(.el-menu-item:hover) {
   background-color: var(--menu-hover-bg);
+  transform: translateX(2px);
+}
+
+.sidebar.is-collapsed :deep(.el-menu-item:hover) {
+  transform: scale(1.05);
 }
 
 :deep(.el-icon) {
   font-size: 18px;
   margin-right: 12px;
+}
+
+.sidebar.is-collapsed :deep(.el-icon) {
+  margin-right: 0;
 }
 
 .menu-group-title {
@@ -177,6 +277,7 @@ html.dark :deep(.el-menu-item.is-active) {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  transition: opacity 0.3s;
 }
 
 .menu-tag {
@@ -193,6 +294,10 @@ html.dark :deep(.el-menu-item.is-active) {
   background: var(--bg-color);
 }
 
+.sidebar.is-collapsed .sidebar-footer {
+  padding: 16px 12px;
+}
+
 .user-profile {
   display: flex;
   align-items: center;
@@ -200,17 +305,25 @@ html.dark :deep(.el-menu-item.is-active) {
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+}
+
+.user-profile.is-collapsed {
+  justify-content: center;
+  padding: 8px;
+  gap: 0;
 }
 
 .user-profile:hover {
   background: var(--header-bg-color);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .user-avatar {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
+  flex-shrink: 0;
 }
 
 .user-info {
@@ -237,9 +350,36 @@ html.dark :deep(.el-menu-item.is-active) {
   font-size: 1.25rem;
   cursor: pointer;
   transition: color 0.2s;
+  flex-shrink: 0;
 }
 
 .logout-icon:hover {
-  color: #ef4444;
+  color: var(--error-color);
+}
+
+/* 淡入淡出动画 */
+.fade-enter-active {
+  transition: opacity 0.3s ease 0.1s;
+}
+
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 图标动画 */
+:deep(.el-icon) {
+  font-size: 18px;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+}
+
+.sidebar.is-collapsed :deep(.el-icon) {
+  margin-right: 0;
+  font-size: 20px;
 }
 </style>
